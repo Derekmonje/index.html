@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#15171b">
+<title>Deskboard</title>
+<style>
+:root{--bg:#15171b;--panel:#1e2127;--line:#2e333b;--tx:#ebe8e1;--dim:#8d929b;--ac:#5fd3e8;--warn:#ffb454;--ok:#7fd48a;color-scheme:dark;
+--font:"SF Pro Rounded",ui-rounded,-apple-system,system-ui,"Helvetica Neue",sans-serif}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--font);overflow:hidden;font-variant-numeric:tabular-nums}
+.app{height:100%;display:flex;flex-direction:column;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.pages{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;min-height:0}
+.pages::-webkit-scrollbar{display:none}
+.pg{flex:0 0 100%;scroll-snap-align:start;padding:14px 18px 6px;overflow-y:auto;min-height:0}
+nav{display:flex;height:42px;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:content-box}
+nav button{flex:1;background:none;border:0;color:var(--dim);font:600 14px var(--font)}
+nav button.on{color:var(--ac);box-shadow:inset 0 2px 0 var(--ac)}
+.row{display:flex;gap:14px;height:100%}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.box{background:var(--panel);border-radius:12px;padding:12px 14px}
+h2{font:600 13px var(--font);color:var(--dim);margin-bottom:6px}
+.clock{font:700 92px/1 var(--font);letter-spacing:-2px}
+.date{color:var(--dim);font-size:16px;margin-top:4px}
+.big{font:700 40px/1.1 var(--font);color:var(--ac)}
+.sub{color:var(--dim);font-size:14px;margin-top:2px}
+button.b,a.b{background:var(--ac);color:#06191d;border:0;border-radius:10px;padding:10px 16px;font:700 15px var(--font);text-decoration:none;display:inline-block;text-align:center}
+button.g{background:#2a2f37;color:var(--tx)}
+button.r{background:var(--warn);color:#2a1700}
+input,select,textarea{background:#12141a;border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:8px 10px;font:16px var(--font);min-width:0}
+ul{list-style:none}
+li{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:16px}
+li:last-child{border:0}
+li.done span{color:var(--dim);text-decoration:line-through}
+li .x{margin-left:auto;background:none;border:0;color:var(--dim);font-size:18px;padding:0 4px}
+.chk{width:22px;height:22px;accent-color:var(--ac)}
+.fr{display:flex;gap:8px;margin-top:8px}.fr input{flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto}
+.tabs button{background:#2a2f37;color:var(--dim);border:0;border-radius:8px;padding:7px 12px;font:600 14px var(--font);white-space:nowrap}
+.tabs button.on{background:var(--ac);color:#06191d}
+.tl{display:none}.tl.on{display:block}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;color:var(--dim);font-weight:600;padding:5px 6px;position:sticky;top:0;background:var(--bg)}
+td{padding:6px;border-top:1px solid var(--line)}
+.out{font:700 26px var(--font);color:var(--ac)}
+.tm{font:700 54px/1 var(--font)}
+.spot{background:#1db954;color:#04200d}
+a.g{background:#2a2f37;color:var(--tx)}
+.gd .box{margin-bottom:8px}.gd li{display:block;font-size:15px;line-height:1.4;padding:5px 0}.gd table td,.gd table th{font-size:14px}
+.now{color:var(--warn)}
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fg label{display:flex;flex-direction:column;gap:3px}.fg input,.fg select{width:100%}
+</style></head><body>
+<div class="app">
+<div class="pages" id="pages">
+
+<section class="pg"><div class="row">
+ <div class="col" style="flex:1.15">
+  <div><div class="clock" id="clk"></div><div class="date" id="dt"></div></div>
+  <div class="box"><h2>Next meeting</h2><div class="big" id="nm">None today</div><div class="sub" id="nmt"></div></div>
+  <div class="fr" style="margin:0"><a class="b spot" href="spotify:" style="flex:1;padding:10px 6px">Spotify</a><a class="b g" href="msteams://" style="flex:1;padding:10px 6px">Teams</a><a class="b g" href="ms-outlook://" style="flex:1;padding:10px 6px">Outlook</a></div>
+ </div>
+ <div class="col box" style="flex:1;overflow:auto"><h2>Today's tasks</h2><ul id="tl"></ul>
+  <div class="fr"><input id="ti" placeholder="Add task" enterkeyhint="done"><button class="b" id="ta">Add</button></div></div>
+</div></section>
+
+<section class="pg"><div class="row">
+ <div class="col" style="flex:.9">
+  <div class="box"><h2 id="ap">Not running</h2><div class="tm" id="at">0:00:00</div>
+   <div class="fr"><select id="ps" style="flex:1"></select></div>
+   <div class="fr"><button class="b" id="go" style="flex:1">Start</button></div>
+   <div class="fr"><input id="np" placeholder="New project / task"><button class="b g" id="npb">Add</button></div></div>
+  <div class="box"><h2>Today by project</h2><div id="sum" class="sub"></div></div>
+ </div>
+ <div class="col box" style="flex:1.1;overflow:auto"><h2>History</h2><ul id="hist"></ul></div>
+</div></section>
+
+<section class="pg"><div class="row">
+ <div class="col box" style="flex:1.3;overflow:auto"><h2>Today</h2><ul id="sch"></ul></div>
+ <div class="col" style="flex:1">
+  <div class="box"><h2>Add meeting</h2><div class="fr" style="margin-top:0"><input type="time" id="mt"><input id="mn" placeholder="Title"></div>
+   <div class="fr"><button class="b" id="ma" style="flex:1">Add</button></div></div>
+  <div class="box"><h2>Import Outlook calendar (.ics text)</h2><textarea id="ics" rows="2" placeholder="Paste .ics contents" style="width:100%"></textarea>
+   <div class="fr"><button class="b g" id="ib" style="flex:1">Import today's events</button></div><div class="sub" id="im"></div></div>
+ </div>
+</div></section>
+
+<section class="pg">
+ <div class="tabs" id="tt"><button data-t="cv" class="on">Convert</button><button data-t="th">Threads</button><button data-t="ca">Calc</button><button data-t="st">Stack-up</button><button data-t="ma">Materials</button><button data-t="th2">Thermal expansion</button><button data-t="tq">Bolt torque</button><button data-t="bm">Beam</button><button data-t="ip">IP ratings</button></div>
+
+ <div class="tl on" id="cv"><div class="row" style="height:auto;align-items:center;flex-wrap:wrap">
+  <select id="cc"></select><input id="cvv" type="number" inputmode="decimal" value="1" style="width:110px"><select id="cf"></select><span>→</span><select id="ct"></select><div class="out" id="cvo"></div></div></div>
+
+ <div class="tl" id="th"><input id="tf" placeholder="Filter (e.g. M6, 1/4, #10)" style="width:100%;margin-bottom:6px">
+  <table><thead><tr><th>Thread</th><th>Pitch/TPI</th><th>Tap drill</th><th>Clearance</th></tr></thead><tbody id="tb"></tbody></table></div>
+
+ <div class="tl" id="ca"><input id="ce" placeholder="e.g. (12.5*3)/sqrt(2)+sin(30)" style="width:100%" inputmode="text" autocapitalize="off" autocorrect="off">
+  <div class="fr"><label class="sub"><input type="checkbox" id="cd" checked> Degrees</label></div>
+  <div class="out" id="co" style="margin-top:8px"></div><div class="sub">Functions: sin cos tan asin acos atan sqrt ln log abs exp pi. Use ^ for power.</div></div>
+
+ <div class="tl" id="st"><table><thead><tr><th>Part</th><th>Nominal</th><th>± Tol</th><th>Dir</th><th></th></tr></thead><tbody id="sb"></tbody></table>
+  <div class="fr"><button class="b g" id="sa">Add row</button></div>
+  <div id="so" class="box" style="margin-top:8px"></div></div>
+
+ <div class="tl" id="ma2"><div id="mb"></div></div>
+ <div class="tl" id="th2"><div id="th2b"></div></div>
+ <div class="tl" id="tq"></div><div class="tl" id="bm"></div>
+ <div class="tl" id="ip"><table><thead><tr><th>Rating</th><th>Protection</th></tr></thead><tbody><tr><td><b>IP54</b></td><td>Limited dust ingress, splashing water</td></tr><tr><td><b>IP65</b></td><td>Dust-tight, low-pressure water jets</td></tr><tr><td><b>IP66</b></td><td>Dust-tight, powerful water jets</td></tr><tr><td><b>IP67</b></td><td>Dust-tight, 1 m immersion for 30 min</td></tr><tr><td><b>IP68</b></td><td>Dust-tight, continuous immersion (depth/time set by manufacturer)</td></tr><tr><td><b>IP69K</b></td><td>Dust-tight, high-pressure, high-temp washdown (80 °C, 80–100 bar)</td></tr></tbody></table></div>
+</section>
+
+<section class="pg gd"><div class="tabs" id="gt"></div><div id="gp"></div></section>
+</div>
+<nav id="nav"><button class="on">Overview</button><button>Projects</button><button>Schedule</button><button>Tools</button><button>Guides</button><button id="moon" style="flex:0 0 96px;border-left:1px solid var(--line)">☾ Off</button></nav>
+<div id="dim" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .8s;z-index:99"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const dayKey=d=>new Date(d).toDateString();
+const hm=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const dur=ms=>{let s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h+':'+String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let tasks=ld('tasks',[]),meets=ld('meets',[]),runs=ld('runs',[]),projs=ld('projs',['General']),act=ld('act',null);
+
+/* nav */
+const pages=$('#pages'),nb=$$('#nav button:not(#moon)');
+nb.forEach((b,i)=>b.onclick=()=>pages.scrollTo({left:i*pages.clientWidth,behavior:'smooth'}));
+pages.onscroll=()=>{const i=Math.round(pages.scrollLeft/pages.clientWidth);nb.forEach((b,j)=>b.classList.toggle('on',i==j))};
+let wl;document.addEventListener('click',async()=>{try{if(!wl&&navigator.wakeLock)wl=await navigator.wakeLock.request('screen'),wl.onrelease=()=>wl=null}catch(e){}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='visible')wl=null});
+
+/* tasks */
+function rTasks(){$('#tl').innerHTML=tasks.map((t,i)=>`<li class="${t.d?'done':''}"><input type="checkbox" class="chk" data-i="${i}" ${t.d?'checked':''}><span>${esc(t.t)}</span><button class="x" data-x="${i}">✕</button></li>`).join('')||'<li class="sub">No tasks yet. Add one below.</li>'}
+$('#tl').onclick=e=>{const c=e.target.dataset;if(c.i!=null)tasks[c.i].d=!tasks[c.i].d;else if(c.x!=null)tasks.splice(c.x,1);else return;sv('tasks',tasks);rTasks()};
+const addT=()=>{const v=$('#ti').value.trim();if(!v)return;tasks.push({t:v,d:0});$('#ti').value='';sv('tasks',tasks);rTasks()};
+$('#ta').onclick=addT;$('#ti').onkeydown=e=>e.key=='Enter'&&addT();
+
+/* meetings */
+const todays=()=>meets.filter(m=>dayKey(m.s)==dayKey(Date.now())).sort((a,b)=>a.s-b.s);
+function rSched(){const n=Date.now();$('#sch').innerHTML=todays().map(m=>{const now=m.s<=n&&n<m.s+(m.d||3600000);return `<li><b class="${now?'now':''}" style="width:78px">${hm(m.s)}</b><span>${esc(m.n)}</span><button class="x" data-x="${m.id}">✕</button></li>`}).join('')||'<li class="sub">Nothing scheduled today.</li>'}
+$('#sch').onclick=e=>{const id=e.target.dataset.x;if(!id)return;meets=meets.filter(m=>m.id!=id);sv('meets',meets);rSched()};
+$('#ma').onclick=()=>{const t=$('#mt').value,n=$('#mn').value.trim();if(!t||!n)return;const [h,m]=t.split(':'),d=new Date();d.setHours(h,m,0,0);meets.push({id:Date.now(),s:d.getTime(),n});sv('meets',meets);$('#mn').value='';rSched()};
+$('#ib').onclick=()=>{const tx=$('#ics').value.replace(/\r?\n[ \t]/g,''),ev=tx.split('BEGIN:VEVENT').slice(1);let c=0;
+ const pd=s=>{const m=s.match(/(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)(\d\d)?)?(Z)?/);if(!m)return null;return m[7]?Date.UTC(m[1],m[2]-1,m[3],m[4]||0,m[5]||0):new Date(m[1],m[2]-1,m[3],m[4]||0,m[5]||0).getTime()};
+ ev.forEach(e=>{const g=k=>(e.match(new RegExp('^'+k+'[^:\\n]*:(.*)$','m'))||[])[1];const s=pd(g('DTSTART')||''),en=pd(g('DTEND')||''),n=(g('SUMMARY')||'Meeting').trim();
+  if(s&&dayKey(s)==dayKey(Date.now())&&!meets.some(m=>m.s==s&&m.n==n)){meets.push({id:Date.now()+c,s,n,d:en?en-s:3600000});c++}});
+ sv('meets',meets);$('#im').textContent=ev.length?`Added ${c} event(s) for today. Repeating events are not expanded.`:'No events found in that text.';rSched()};
+
+/* overview tick */
+function tick(){const d=new Date();$('#clk').textContent=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+ $('#dt').textContent=d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+ const nx=todays().find(m=>m.s>d.getTime()||d.getTime()<m.s+(m.d||3600000));
+ if(nx){const diff=nx.s-d.getTime();$('#nm').textContent=diff>0?(diff>3600000?Math.floor(diff/3600000)+'h ':'')+Math.floor(diff%3600000/60000)+'m '+(diff<3600000?String(Math.floor(diff%60000/1000)).padStart(2,'0')+'s':''):'In progress';
+  $('#nmt').textContent=nx.n+' · '+hm(nx.s)}else{$('#nm').textContent='None left today';$('#nmt').textContent=''}
+ if(act){$('#at').textContent=dur(Date.now()-act.s)}
+}
+setInterval(tick,1000);
+
+/* projects */
+function rProj(){$('#ps').innerHTML=projs.map(p=>`<option ${act&&act.p==p?'selected':''}>${esc(p)}</option>`).join('');
+ $('#go').textContent=act?'Stop':'Start';$('#go').className='b '+(act?'r':'');$('#ps').disabled=!!act;
+ $('#ap').textContent=act?'Running: '+act.p:'Not running';if(!act)$('#at').textContent='0:00:00';
+ const t=runs.filter(r=>dayKey(r.s)==dayKey(Date.now())),by={};t.forEach(r=>by[r.p]=(by[r.p]||0)+r.e-r.s);
+ $('#sum').innerHTML=Object.entries(by).map(([p,v])=>`${esc(p)}: <b style="color:var(--tx)">${dur(v)}</b>`).join('<br>')||'No time logged today.';
+ let last='';$('#hist').innerHTML=[...runs].reverse().slice(0,60).map((r,i)=>{const k=dayKey(r.s),h=k!=last?`<div class="sub" style="padding-top:6px">${new Date(r.s).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})}</div>`:'';last=k;
+  return h+`<li><span>${esc(r.p)}</span><span class="sub" style="margin-left:auto">${hm(r.s)}–${hm(r.e)}</span><b>${dur(r.e-r.s)}</b><button class="x" data-x="${runs.length-1-i}">✕</button></li>`}).join('')||'<li class="sub">No entries yet. Press Start.</li>'}
+$('#go').onclick=()=>{if(act){runs.push({p:act.p,s:act.s,e:Date.now()});act=null}else act={p:$('#ps').value,s:Date.now()};sv('runs',runs);sv('act',act);rProj();tick()};
+$('#npb').onclick=()=>{const v=$('#np').value.trim();if(!v||projs.includes(v))return;projs.push(v);sv('projs',projs);$('#np').value='';rProj()};
+$('#hist').onclick=e=>{const x=e.target.dataset.x;if(x==null)return;runs.splice(x,1);sv('runs',runs);rProj()};
+
+/* tools tabs */
+$('#tt').onclick=e=>{const t=e.target.dataset.t;if(!t)return;$$('#tt button').forEach(b=>b.classList.toggle('on',b==e.target));$$('.tl').forEach(x=>x.classList.remove('on'));$('#'+(t=='ma'?'ma2':t)).classList.add('on')};
+
+/* convert */
+const U={Length:{mm:.001,cm:.01,m:1,km:1e3,in:.0254,ft:.3048,yd:.9144,mi:1609.344,mil:2.54e-5},
+ Force:{N:1,kN:1e3,lbf:4.4482216,kgf:9.80665},Pressure:{Pa:1,kPa:1e3,MPa:1e6,bar:1e5,psi:6894.757,ksi:6894757},
+ Torque:{'N·m':1,'N·mm':.001,'lbf·ft':1.3558179,'lbf·in':.1129848,'kgf·m':9.80665},Mass:{g:.001,kg:1,lb:.45359237,oz:.0283495},
+ Temp:{'°C':0,'°F':0,'K':0}};
+$('#cc').innerHTML=Object.keys(U).map(k=>`<option>${k}</option>`).join('');
+function cvUnits(){const o=Object.keys(U[$('#cc').value]).map(k=>`<option>${k}</option>`).join('');$('#cf').innerHTML=o;$('#ct').innerHTML=o;$('#ct').selectedIndex=1;cv()}
+function cv(){const c=$('#cc').value,v=parseFloat($('#cvv').value),f=$('#cf').value,t=$('#ct').value;if(isNaN(v)){$('#cvo').textContent='';return}let r;
+ if(c=='Temp'){const k=f=='°C'?v+273.15:f=='°F'?(v-32)*5/9+273.15:v;r=t=='°C'?k-273.15:t=='°F'?(k-273.15)*9/5+32:k}else r=v*U[c][f]/U[c][t];
+ $('#cvo').textContent=+r.toPrecision(7)+' '+t}
+$('#cc').onchange=cvUnits;['#cvv','#cf','#ct'].forEach(s=>$(s).oninput=cv);cvUnits();
+
+/* threads: [name, pitch, tap, clearance] */
+const TH=[['M3','0.5','2.5 mm','3.4 mm'],['M4','0.7','3.3 mm','4.5 mm'],['M5','0.8','4.2 mm','5.5 mm'],['M6','1.0','5.0 mm','6.6 mm'],['M8','1.25','6.8 mm','9.0 mm'],['M10','1.5','8.5 mm','11.0 mm'],['M12','1.75','10.2 mm','13.5 mm'],['M16','2.0','14.0 mm','17.5 mm'],['M20','2.5','17.5 mm','22.0 mm'],
+['#4-40','40','#43 (.089)','#32 (.116)'],['#6-32','32','#36 (.1065)','#26 (.147)'],['#8-32','32','#29 (.136)','#16 (.177)'],['#10-24','24','#25 (.1495)','#7 (.201)'],['#10-32','32','#21 (.159)','#7 (.201)'],['1/4-20','20','#7 (.201)','F (.257)'],['1/4-28','28','#3 (.213)','F (.257)'],['5/16-18','18','F (.257)','P (.323)'],['3/8-16','16','5/16 (.3125)','W (.386)'],['1/2-13','13','27/64 (.4219)','33/64 (.5156)']];
+const rTh=()=>{const q=$('#tf').value.toLowerCase();$('#tb').innerHTML=TH.filter(r=>r[0].toLowerCase().includes(q)).map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')};
+$('#tf').oninput=rTh;rTh();
+
+/* calc */
+const D=()=>$('#cd').checked?Math.PI/180:1,fn={sin:x=>Math.sin(x*D()),cos:x=>Math.cos(x*D()),tan:x=>Math.tan(x*D()),asin:x=>Math.asin(x)/D(),acos:x=>Math.acos(x)/D(),atan:x=>Math.atan(x)/D(),sqrt:Math.sqrt,ln:Math.log,log:Math.log10,abs:Math.abs,exp:Math.exp,pi:Math.PI};
+function calc(){const s=$('#ce').value.trim();if(!s){$('#co').textContent='';return}
+ const ids=s.match(/[a-z]+/gi)||[];if(!/^[0-9a-z+\-*/().,^%\s]*$/i.test(s)||ids.some(i=>!(i in fn))){$('#co').textContent='…';return}
+ try{const r=Function(...Object.keys(fn),'return ('+s.replace(/\^/g,'**')+')')(...Object.values(fn));$('#co').textContent=isFinite(r)?'= '+(+r.toPrecision(10)):'…'}catch(e){$('#co').textContent='…'}}
+$('#ce').oninput=calc;$('#cd').onchange=calc;
+
+/* stack-up */
+let rows=ld('stack',[{n:'Housing',v:25,t:.1,d:1},{n:'Spacer',v:10,t:.05,d:-1},{n:'Bearing',v:12,t:.02,d:-1}]);
+function rSt(){$('#sb').innerHTML=rows.map((r,i)=>`<tr><td><input data-i="${i}" data-k="n" value="${esc(r.n)}" style="width:100px"></td><td><input data-i="${i}" data-k="v" type="number" inputmode="decimal" value="${r.v}" style="width:80px"></td><td><input data-i="${i}" data-k="t" type="number" inputmode="decimal" value="${r.t}" style="width:70px"></td><td><button class="b g" data-d="${i}" style="padding:6px 12px">${r.d>0?'+':'−'}</button></td><td><button class="x" data-x="${i}" style="background:none;border:0;color:var(--dim);font-size:18px">✕</button></td></tr>`).join('');sSum()}
+function sSum(){const n=rows.reduce((a,r)=>a+r.d*r.v,0),w=rows.reduce((a,r)=>a+Math.abs(r.t),0),q=Math.sqrt(rows.reduce((a,r)=>a+r.t*r.t,0)),f=x=>+x.toFixed(4);
+ $('#so').innerHTML=`<div class="sub">Gap nominal</div><div class="out">${f(n)}</div><div class="sub" style="margin-top:6px">Worst case: <b style="color:var(--tx)">${f(n-w)} to ${f(n+w)}</b> (±${f(w)})<br>RSS: <b style="color:var(--tx)">${f(n-q)} to ${f(n+q)}</b> (±${f(q)})</div>`;sv('stack',rows)}
+$('#sb').oninput=e=>{const d=e.target.dataset;if(d.k){rows[d.i][d.k]=d.k=='n'?e.target.value:parseFloat(e.target.value)||0;sSum()}};
+$('#sb').onclick=e=>{const d=e.target.dataset;if(d.d!=null)rows[d.d].d*=-1;else if(d.x!=null)rows.splice(d.x,1);else return;rSt()};
+$('#sa').onclick=()=>{rows.push({n:'Part',v:0,t:0,d:1});rSt()};
+
+/* materials */
+const MT=[['6061-T6 Al',2.70,68.9,276,310,23.6],['7075-T6 Al',2.81,71.7,503,572,23.4],['304 Stainless',8.00,193,215,505,17.3],['316 Stainless',8.00,193,205,515,16.0],['1018 Steel',7.87,205,370,440,11.7],['Ti-6Al-4V',4.43,114,880,950,8.6],['Brass C360',8.50,97,310,385,20.5],['Copper C110',8.94,117,69,220,17.0],['Nylon 6/6',1.14,3.0,80,80,80],['Delrin (POM)',1.41,3.1,70,70,110],['ABS',1.04,2.3,40,40,90]];
+$('#mb').innerHTML='<table><thead><tr><th>Material</th><th>Density g/cc</th><th>E GPa</th><th>Yield MPa</th><th>UTS MPa</th><th>CTE µm/m·K</th></tr></thead><tbody>'+MT.map(r=>'<tr><td><b>'+r[0]+'</b></td>'+r.slice(1).map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table><div class="sub" style="padding:6px">Typical room-temperature values. Verify against the supplier datasheet before design use.</div>';
+
+/* generic calculator builder: F = [key,label,default,options?] */
+const fx=(x,d=3)=>+x.toFixed(d),R=(l,x,u)=>`<div class="sub">${l}: <b style="color:var(--tx)">${x}</b> ${u||''}</div>`;
+function tool(id,F,fn){const el=$('#'+id);
+ el.innerHTML='<div class="fg">'+F.map(f=>`<label class="sub">${f[1]}${f[3]?`<select data-k="${f[0]}">${f[3].map(o=>`<option value="${o[1]}"${o[1]==f[2]?' selected':''}>${o[0]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="number" inputmode="decimal" value="${f[2]}">`}</label>`).join('')+`</div><div class="box" style="margin-top:8px" id="${id}o"></div>`;
+ const run=()=>{const v={};el.querySelectorAll('[data-k]').forEach(i=>v[i.dataset.k]=parseFloat(i.value)||0);$('#'+id+'o').innerHTML=fn(v)};el.oninput=run;el.onchange=run;run()}
+
+tool('th2b',[['a','Material (µm/m·K)',23.6,[['Aluminum 6061',23.6],['Stainless 304',17.3],['Steel 1018',11.7],['Titanium',8.6],['Brass',20.5],['Delrin',110],['ABS',90],['Glass BK7',7.1]]],['l','Length mm',100],['dt','ΔT °C',50]],v=>R('Growth',fx(v.a*v.l*v.dt/1000,1),'µm'));
+
+const AT={3:5.03,4:8.78,5:14.2,6:20.1,8:36.6,10:58,12:84.3};
+tool('tq',[['d','Size',6,[['M3',3],['M4',4],['M5',5],['M6',6],['M8',8],['M10',10],['M12',12]]],['p','Grade (proof MPa)',580,[['8.8',580],['10.9',830],['12.9',970],['A2-70',450],['A4-80',600]]],['k','Nut factor K',0.2],['pc','Preload % of proof',75]],v=>{const F=AT[v.d]*v.p*v.pc/100,T=v.k*v.d*F/1000;return R('Preload',fx(F/1000,2),'kN')+R('Tightening torque',fx(T,2),'N·m ('+fx(T*8.851,1)+' in·lbf)')+'<div class="sub" style="margin-top:4px">T = K·d·F. K ≈ 0.2 dry, 0.15 lubricated. Stainless can gall: lubricate and go lower. Check into plastic or tapped aluminum separately.</div>'});
+
+tool('bm',[['t','Case',1,[['Cantilever, end load',1],['Simply supported, center load',2]]],['L','Length mm',100],['b','Width mm',20],['h','Thickness mm',5],['F','Force N',50],['E','E GPa',68.9]],v=>{const I=v.b*v.h**3/12,E=v.E*1000,c=v.t==1,d=c?v.F*v.L**3/(3*E*I):v.F*v.L**3/(48*E*I),s=c?6*v.F*v.L/(v.b*v.h**2):1.5*v.F*v.L/(v.b*v.h**2);return R('Max deflection',fx(d),'mm')+R('Max bending stress',fx(s,1),'MPa')+R('Moment of inertia',fx(I,1),'mm⁴')});
+
+
+/* design guides */
+const S=(h,a)=>`<div class="box"><h2>${h}</h2><ul>${a.map(x=>'<li>'+x+'</li>').join('')}</ul></div>`;
+const G=[
+['Thread-forming',S('Thread-forming screws in plastic',['<b>Hole dia</b> as % of screw major dia: soft/unfilled (PE, PP) 75–80%, ABS/PC/PA 80–85%, rigid or glass-filled 85–90%.','<b>Engagement</b> at least 2× major dia (1.5× minimum).','<b>Boss OD</b> 2–2.5× major dia. Wall at boss base ≤ 60% of nominal wall to limit sink marks.','<b>Hole depth</b> = engagement + about 0.5× dia so the tip never bottoms out.','<b>Lead-in</b>: chamfer or counterbore at the hole entry, about screw major dia.','<b>Gussets</b>: 3–4 around the boss, height ≤ 2/3 of boss, thickness ≤ 50–60% of wall.','Aim for strip torque ≥ 2× drive torque. Repeated reassembly weakens the thread, so use a torque-limited driver.'])+S('Thread-forming screws in metal (ductile Al, mild steel, brass)',['Use the cold-form tap drill size, no chips are made. Starting points: <b>M3</b> 2.8 · <b>M4</b> 3.7 · <b>M5</b> 4.65 · <b>M6</b> 5.55 · <b>M8</b> 7.4 · <b>M10</b> 9.3 mm.','Engagement at least 1.5× dia in aluminum. Use lubricant.','Not for hard or brittle material (cast iron, hardened steel, high-silicon die cast). Check the screw supplier chart for the exact hole size.'])],
+['Heat-set inserts',S('Heat-set (knurled) inserts in plastic',['<b>Hole dia</b> about 0.2–0.4 mm under the insert OD. Take the exact size from the insert supplier drawing.','<b>Hole depth</b> = insert length + 1–1.5 mm, so displaced plastic and the screw tip have room.','<b>Boss OD</b> ≥ 2× insert OD (wall ≥ 0.5× insert OD). Keep ≥ 1× OD from edges and other features.','<b>Lead-in chamfer</b> on the hole helps start the insert square.','<b>Install</b>: iron or press tip just above the resin melt point (about 200–300 °C by resin), slow steady push, finish flush or about 0.2 mm below the surface. Let it cool before loading.','Screw length ≤ insert depth minus 0.5 mm. Do not bottom out the screw.','Glass-filled resins hold inserts better. Test pull-out and torque-out on real parts.'])],
+['Molding',S('Injection molded parts',['<b>Wall</b>: keep uniform, typically 1–3.5 mm. Transition thick to thin gradually, ≤ 3:1.','<b>Draft</b>: 0.5–1° per side minimum. Textured faces add about 1° per 0.025 mm of texture depth.','<b>Corners</b>: inside radius ≥ 0.5× wall, outside radius = inside + wall.','<b>Ribs</b>: thickness 50–60% of wall, height ≤ 3× wall, with a base radius and draft.','<b>Bosses</b>: OD 2× hole, wall ≤ 60% of nominal, supported by gussets or tied to a wall.','Undercuts need side actions or lifters. Design snap fits to release without them where possible.','Keep ejector pin locations, gate position and parting line flat and cosmetic-safe. Avoid thick sections to prevent sink and voids.','Shrinkage varies by resin (about 0.4–2%). Confirm with the molder.'])],
+['Casting',S('Die cast and cast housings',['<b>Wall</b>: uniform, 1.5–4 mm typical for aluminum die cast (thin to about 1 mm with care). Sand casting is thicker.','<b>Draft</b>: die cast ≥ 1° outside and ≥ 2° inside. Sand casting 2–3°.','<b>Fillets</b>: inside radius ≥ 0.5× wall, no sharp corners.','<b>Ribs</b>: thickness 50–70% of wall, height ≤ 3–5× wall.','<b>Fins</b> (heat sink): thickness ≥ 1–1.5 mm with 1–2° draft. Keep spacing wide enough for the die to fill.','<b>Machining allowance</b>: 0.25–0.75 mm die cast, 2–3 mm sand cast. Do not machine deep into die cast, porosity shows up.','Sealing faces and threads: plan for leak test and impregnation if needed.','As-cast linear tolerance is about ±0.1–0.25 mm for small features. Add allowance across the parting line.'])],
+['Extrusion',S('Aluminum extrusions',['<b>Alloy</b>: 6063-T5 for heat sinks and trim (better thermal), 6061-T6 for structure.','<b>Wall</b>: uniform, ≥ 1–1.5 mm typical. Keep adjacent wall ratio ≤ 2:1.','<b>Corners</b>: radius ≥ 0.5–1 mm on outer and inner corners.','<b>Hollows</b> raise tooling cost. Avoid semi-hollows with gap/depth tongue ratio worse than 1:3.','<b>Heat sink fins</b>: thickness ≥ 1 mm, gap at least 1/10 of fin height. Higher ratios need a specialist die.','<b>Screw ports</b> and slots can be extruded in. Size for self-tapping or thread-forming screws.','Tolerance: about ±0.1–0.3 mm on profile dimensions depending on size. Cut length ±1 mm. Straightness about 0.2 mm/m.','Design symmetric profiles when you can. Asymmetry increases twist and bow.'])],
+['GD&T','<div class="box"><h2>Symbols (ASME Y14.5)</h2><table><thead><tr><th></th><th>Name</th><th>Type</th><th>Datum</th></tr></thead><tbody>'+[['⏤','Straightness','Form','No'],['⏥','Flatness','Form','No'],['○','Circularity','Form','No'],['⌭','Cylindricity','Form','No'],['⌒','Profile of a line','Profile','Optional'],['⌓','Profile of a surface','Profile','Optional'],['⟂','Perpendicularity','Orientation','Yes'],['∠','Angularity','Orientation','Yes'],['∥','Parallelism','Orientation','Yes'],['⌖','Position','Location','Yes'],['◎','Concentricity*','Location','Yes'],['⌯','Symmetry*','Location','Yes'],['↗','Circular runout','Runout','Yes'],['⌰','Total runout','Runout','Yes']].map(r=>'<tr><td style="font-size:20px">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>').join('')+'</tbody></table><div class="sub">*Removed in Y14.5-2018. Use position or profile instead.</div></div>'+S('Modifiers and terms',['Ⓜ <b>MMC</b>: most material (smallest hole, largest pin). Ⓛ <b>LMC</b>: least material. Default is RFS (regardless of feature size).','⌀ diameter zone · Ⓟ projected tolerance zone · Ⓕ free state · Ⓣ tangent plane.','<b>Rule #1</b>: size limits also control form. A feature at MMC must have perfect form.','<b>Datum frame</b>: primary touches at 3 points, secondary 2, tertiary 1. Order matters.','<b>Bonus tolerance</b> (with MMC): hole = actual size − MMC size, pin = MMC size − actual size.','<b>Virtual condition</b>: external feature = MMC + geometric tol, internal = MMC − geometric tol.','<b>Fastener holes</b>: floating T = H − F, fixed T = (H − F) / 2, where H is hole MMC dia and F is fastener MMC dia.'])+'<div class="box"><h2>Fastener hole position calculator</h2><div id="gdt"></div></div>']
+];
+let gi=ld('gi',0);if(!G[gi])gi=0;
+function rG(){$('#gt').innerHTML=G.map((g,i)=>`<button data-g="${i}" class="${i==gi?'on':''}">${g[0]}</button>`).join('');
+ $('#gp').innerHTML=G[gi][1]+'<div class="sub" style="padding:2px 4px 8px">Typical starting points. Confirm against supplier data, your standards and a prototype.</div>';
+ if(G[gi][0]=='GD&T')tool('gdt',[['H','Hole MMC dia mm',6.6],['F','Fastener MMC dia mm',6],['A','Hole actual dia mm',6.8],['P','Position tol at MMC mm',0.3]],v=>R('Floating fastener tolerance',fx(v.H-v.F),'mm dia')+R('Fixed fastener tolerance',fx((v.H-v.F)/2),'mm dia')+R('Allowed position at actual size',fx(v.P+Math.max(0,v.A-v.H)),'mm dia (with MMC bonus)'))}
+$('#gt').onclick=e=>{const i=e.target.dataset.g;if(i==null)return;gi=+i;sv('gi',gi);rG()};rG();
+
+/* night mode */
+let dm=ld('dim',0);const DL=['Off','Dim','Night','Auto'];
+function applyDim(){const h=new Date().getHours(),a=[0,.4,.7,(h>=19||h<7)?.7:0][dm];$('#dim').style.opacity=a;$('#moon').textContent='☾ '+DL[dm]}
+$('#moon').onclick=()=>{dm=(dm+1)%4;sv('dim',dm);applyDim()};setInterval(applyDim,30000);applyDim();
+
+rTasks();rSched();rProj();rSt();calc();tick();
+</script></body></html>
